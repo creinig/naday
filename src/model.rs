@@ -1,4 +1,4 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use chrono::{DateTime, Local};
 
 #[derive(Debug)]
 pub struct Config {
@@ -7,22 +7,27 @@ pub struct Config {
 
 #[derive(Debug)]
 pub struct Activity {
-    pub timestamp: u64,
+    pub timestamp: DateTime<Local>,
     pub category: String,
     pub reps: u32,
 }
 
 impl Activity {
-    pub fn new(repetitions: u32, category: String) -> Activity {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
+    pub fn new(repetitions: u32, category: &str) -> Activity {
+        let now = Local::now();
 
         Activity {
             timestamp: now,
             reps: repetitions,
-            category: category,
+            category: category.to_string(),
         }
+    }
+}
+
+impl PartialEq for Activity {
+    fn eq(&self, other: &Self) -> bool {
+        (self.timestamp == other.timestamp)
+            && (self.category == other.category)
+            && (self.reps == other.reps)
     }
 }

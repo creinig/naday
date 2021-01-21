@@ -16,3 +16,8 @@ regex = "1"
 [dev-dependencies]
 tempfile = "3.1.0"
 
+[profile.release]
+opt-level = 3
+debug = false
+lto = true
+panic = "unwind"

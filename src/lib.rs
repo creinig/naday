@@ -1,4 +1,5 @@
 mod cli;
+mod error;
 mod model;
 mod storage;
 
@@ -26,16 +27,16 @@ pub fn run(ctx: RunContext) -> Result<(), String> {
 // Main Command handlers ----------------------------
 //
 
-fn run_report(config: &Config) -> Result<(), String> {
+fn run_report(_config: &Config) -> Result<(), String> {
     Err("'report' command not implemented yet".to_string())
 }
 
-fn run_system(config: &Config) -> Result<(), String> {
+fn run_system(_config: &Config) -> Result<(), String> {
     Err("'system' command not implemented yet".to_string())
 }
 
 fn run_add_activity(repetitions: u32, category: String, config: &Config) -> Result<(), String> {
-    let activity = Activity::new(repetitions, category);
+    let activity = Activity::new(repetitions, &category);
     storage::store(&activity, config)
 }
 
