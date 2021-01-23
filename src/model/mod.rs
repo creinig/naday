@@ -87,6 +87,3 @@ impl Display for Category {
     }
 }
 
-//
-// CategoryLookup -------------------------
-//

@@ -1,4 +1,4 @@
-use crate::model::{Activity, Category, CategoryLookup, Config};
+use crate::model::{Activity, CategoryLookup, Config};
 
 use chrono::prelude::*;
 use std::error::Error;
@@ -28,7 +28,7 @@ pub fn read_categories(cfg: &Config) -> Result<CategoryLookup, Box<dyn Error>> {
     let mut lookup = CategoryLookup::new();
 
     for category in categories {
-        lookup.add(category);
+        lookup.add(category)?;
     }
 
     Ok(lookup)

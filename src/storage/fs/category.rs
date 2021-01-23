@@ -5,7 +5,7 @@ use std::error::Error;
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 
 pub fn read_categories(cfg: &Config) -> Result<Vec<Category>, Box<dyn Error>> {
     let path = &(init_category_file(cfg)?);
@@ -71,6 +71,7 @@ Pushups;1;pu;push
 Situps;1;si
 Burpees;1.5;bu
 PlankSeconds;0.33;pl
+WalkingSteps;0.01;wa
 ")?;
     }
 
@@ -117,7 +118,7 @@ mod test {
         let cfg = cfg(&tmp_dir);
 
         let categories = read_categories(&cfg).unwrap();
-        assert_eq!(4, categories.len());
+        assert_eq!(5, categories.len());
 
         assert_eq!("Pushups", &(categories.get(0).unwrap().name));
         assert_eq!(1.0, categories.get(0).unwrap().weight);

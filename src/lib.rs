@@ -5,7 +5,7 @@ mod storage;
 
 use cli::CliAction;
 use cli::RunContext;
-use model::{Activity, Category, CategoryLookup, Config};
+use model::{Activity, Config};
 use std::collections::HashMap;
 use std::env;
 use std::process;

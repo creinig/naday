@@ -37,12 +37,6 @@ pub fn read_day(date: &Date<Local>, config: &Config) -> Result<Vec<Activity>, Bo
         .collect())
 }
 
-/// Read all activities for today
-pub fn read_today(config: &Config) -> Result<Vec<Activity>, Box<dyn Error>> {
-    let now = Local::today();
-    read_day(&now, config)
-}
-
 //
 // Internals ------------------------------
 //

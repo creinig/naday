@@ -1,4 +1,3 @@
-mod model;
 
 use std::env;
 
