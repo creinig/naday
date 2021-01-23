@@ -277,8 +277,6 @@ mod tests {
 
         Ok(())
     }
-    // TODO: test appending activity to existing file
-    // TODO: test roundtrip (add activities & read them again)
 
     fn cfg(tmp: &TempDir) -> Config {
         Config {
