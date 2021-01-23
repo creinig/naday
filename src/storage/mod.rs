@@ -12,6 +12,13 @@ pub fn store(activity: &Activity, config: &Config) -> Result<(), String> {
     }
 }
 
+pub fn read_today(config: &Config) -> Result<Vec<Activity>, String> {
+    match fs::read_today(config) {
+        Ok(activities) => Ok(activities),
+        Err(error) => Err(format!("{:?}", error)),
+    }
+}
+
 /// Read all categories and return a populated lookup structure
 pub fn read_categories(cfg: &Config) -> Result<CategoryLookup, String> {
     match fs::read_categories(cfg) {

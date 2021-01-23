@@ -61,6 +61,10 @@ impl CategoryLookup {
     pub fn len(&self) -> usize {
         self.categories.len()
     }
+
+    pub fn iter(&self) -> std::collections::hash_map::Values<'_, String, Rc<Category>> {
+        self.categories.values()
+    }
 }
 
 //
