@@ -76,14 +76,14 @@ fn show_help(error_msg: Option<String>) -> Result<(), String> {
     // TODO: implement
 }
 
-fn parse_activity(spec: &String) -> Result<CliAction, Box<dyn Error>> {
+fn parse_activity(spec: &str) -> Result<CliAction, Box<dyn Error>> {
     let groups = ACTIVITY_PATTERN.captures(spec).unwrap(); // not perfect error handling, but we can only enter here if the regex matched
     let repetitions: u32 = groups.get(1).unwrap().as_str().parse()?;
     let category: String = groups.get(2).unwrap().as_str().to_string();
 
     Ok(CliAction::AddActivity {
-        repetitions: repetitions,
-        category: category,
+        repetitions,
+        category,
     })
 }
 

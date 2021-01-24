@@ -65,15 +65,14 @@ fn init_activity_file(path: &Path) -> Result<File, Box<dyn Error>> {
 
     writeln!(
         &mut file,
-        "{}\n{}",
-        PREAMBLE_ACTIVITIES_V1,
         "\
+{}
 # List of recorded activities for the 'naday' tool (https://github.com/creinig/naday)
 # Lines beginning with '#' are comments and are ignored by the tool
 # The remaining lines are plain CSV, with one recorded activity per line.
 # Separator character is ';', encoding is UTF-8.
 # Columns: timestamp (local time zone) ; number of repetitions ; category (excercise)"
-    )?;
+    , PREAMBLE_ACTIVITIES_V1)?;
 
     Ok(file)
 }
@@ -96,9 +95,7 @@ fn read_activities(file_path: &Path) -> Result<Vec<Activity>, Box<dyn Error>> {
 
     for line in lines {
         let line = line.trim();
-        if line.starts_with("#") {
-            continue;
-        } else if line.is_empty() {
+        if line.starts_with('#') || line.is_empty() {
             continue;
         }
 
@@ -118,7 +115,7 @@ fn read_activities(file_path: &Path) -> Result<Vec<Activity>, Box<dyn Error>> {
 
 /// parse a single line from an activity file into an Activity struct
 fn parse_activity(line: &str) -> Result<Activity, String> {
-    let mut parts = line.split(";");
+    let mut parts = line.split(';');
 
     //let mut timestamp: DateTime<Local> = Local::now();
     let mut category: String = String::new();
@@ -150,9 +147,9 @@ fn parse_activity(line: &str) -> Result<Activity, String> {
     }
 
     Ok(Activity {
-        timestamp: timestamp,
-        reps: reps,
-        category: category,
+        timestamp,
+        reps,
+        category,
     })
 }
 

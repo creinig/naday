@@ -26,9 +26,7 @@ pub fn read_categories(cfg: &Config) -> Result<Vec<Category>, Box<dyn Error>> {
 
     for line in lines {
         let line = line.trim();
-        if line.starts_with("#") {
-            continue;
-        } else if line.is_empty() {
+        if line.starts_with('#') || line.is_empty() {
             continue;
         }
 
@@ -61,7 +59,8 @@ fn init_category_file(cfg: &Config) -> Result<PathBuf, Box<dyn Error>> {
     if !path.exists() {
         let mut file: File = OpenOptions::new().create(true).write(true).open(&path)?;
 
-        writeln!(&mut file, "{}\n{}", PREAMBLE_CATEGORIES_V1, "\
+        writeln!(&mut file, "\
+{}
 # List of activity categories and their attributes for the 'naday' tool (https://github.com/creinig/naday).
 # Lines beginning with '#' are comments and are ignored by the tool.
 # The remaining lines are basically plain CSV, with one category per line.
@@ -72,7 +71,7 @@ Situps;1;si
 Burpees;1.5;bu
 PlankSeconds;0.33;pl
 WalkingSteps;0.01;wa
-")?;
+", PREAMBLE_CATEGORIES_V1)?;
     }
 
     // return a readonly handle
@@ -80,7 +79,7 @@ WalkingSteps;0.01;wa
 }
 
 fn parse_category(line: &str) -> Result<Category, String> {
-    let mut parts = line.split(";");
+    let mut parts = line.split(';');
 
     let name = match parts.next() {
         Some(name) => name.trim(),

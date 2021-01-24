@@ -61,12 +61,12 @@ impl Category {
     pub fn new<T: Display>(name: &str, weight: f64, aliases: Vec<T>) -> Category {
         Category {
             name: name.to_string(),
-            weight: weight,
+            weight,
             aliases: aliases.iter().map(|a| a.to_string()).collect(),
         }
     }
 
-    fn all_names<'a>(&'a self) -> Vec<&'a str> {
+    fn all_names(&self) -> Vec<&str> {
         let mut result: Vec<&str> = Vec::new();
         result.push(&self.name);
         for alias in &self.aliases {
