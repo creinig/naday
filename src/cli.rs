@@ -5,7 +5,7 @@ use regex::Regex;
 use std::error::Error;
 
 lazy_static! {
-    static ref ACTIVITY_PATTERN: Regex = Regex::new(r"^(\d+)([a-zA-Z]+)$").unwrap();
+    static ref ACTIVITY_PATTERN: Regex = Regex::new(r"^(\d+)([a-zA-Z_]\w*)$").unwrap();
 }
 
 #[derive(Debug, PartialEq)]
@@ -107,6 +107,9 @@ mod tests {
     fn activities() {
         let ctx = RunContext::new(build_args(vec!["16pu"]).into_iter());
         assert_eq!(build_activity(16, "pu"), ctx.unwrap().action, "Falsch");
+
+        let ctx = RunContext::new(build_args(vec!["23h2"]).into_iter());
+        assert_eq!(build_activity(23, "h2"), ctx.unwrap().action, "Falsch");
     }
 
     fn build_args(raw: Vec<&str>) -> Vec<String> {
