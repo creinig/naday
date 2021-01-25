@@ -1,12 +1,12 @@
 mod cli;
 mod error;
 mod model;
+mod report;
 mod storage;
 
 use cli::CliAction;
 use cli::RunContext;
 use model::{Activity, Config};
-use std::collections::HashMap;
 use std::env;
 use std::process;
 
@@ -16,7 +16,7 @@ pub fn cli_parse(args: env::Args) -> RunContext {
 
 pub fn run(ctx: RunContext) -> Result<(), String> {
     match ctx.action {
-        CliAction::Report => run_report(&ctx.config),
+        CliAction::Report => report::today(&ctx.config),
         CliAction::System => run_system(&ctx.config),
         CliAction::AddActivity {
             repetitions,
@@ -28,30 +28,6 @@ pub fn run(ctx: RunContext) -> Result<(), String> {
 //
 // Main Command handlers ----------------------------
 //
-
-fn run_report(config: &Config) -> Result<(), String> {
-    let activities = storage::read_today(config)?;
-    let mut by_category = HashMap::new();
-
-    for activity in activities {
-        let cat = (&activity.category).to_string();
-
-        let reps = if by_category.contains_key(&cat) {
-            by_category.get(&cat).unwrap() + activity.reps
-        } else {
-            activity.reps
-        };
-
-        by_category.insert(cat, reps);
-    }
-
-    println!("\nStats for today:");
-    for (category, reps) in by_category {
-        println!("  {}: {} repetitions", category, reps);
-    }
-
-    Ok(())
-}
 
 fn run_system(config: &Config) -> Result<(), String> {
     let categories = storage::read_categories(config)?;
@@ -83,7 +59,7 @@ fn run_add_activity(repetitions: u32, category: String, config: &Config) -> Resu
     storage::store(&activity, config)?;
 
     println!("Added {} {}", repetitions, &category);
-    run_report(config)?;
+    report::today(config)?;
     Ok(())
 }
 
