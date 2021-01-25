@@ -50,7 +50,7 @@ This shows some key points that are central to the tool's usage:
 Added 18 Pushups
 
 Stats for today:
-  Pushups: 18 repetitions
+  Pushups: 18 reps
 ```
 
 This uses the alias "pu" for Pushups defined in `~/.naday/category.txt` to specify what you did.
@@ -64,9 +64,10 @@ when logging an activity):
 
 ```
 Stats for today:
-  Pushups: 33 repetitions
-  Burpees: 15 repetitions
-  PlankSeconds: 60 repetitions
+  Burpees        : 15 reps
+  Pushups        : 33 reps (16 + 17)
+  PlankSeconds   : 60 reps
+  Weighted total : 75
 ```
 
 Additional and better reports are planned. You can also directly load the save files into a 

@@ -45,12 +45,17 @@ fn report(activities: &Vec<Activity>, categories: &CategoryLookup) -> String {
     result.push_str("Stats for today:\n");
     for category in by_category.keys().sorted() {
         let reps = by_category.get(category).unwrap();
-        result.push_str(&format!(
-            "  {:<15}: {} reps ({})\n",
-            category,
-            reps,
-            individual.get(category).unwrap().iter().join(" + ")
-        ));
+
+        let details = if individual.get(category).unwrap().len() > 1 {
+            format!(
+                " ({})",
+                individual.get(category).unwrap().iter().join(" + ")
+            )
+        } else {
+            "".to_string()
+        };
+
+        result.push_str(&format!("  {:<15}: {} reps{}\n", category, reps, details));
     }
 
     if by_category.len() > 1 {
@@ -89,10 +94,10 @@ mod tests {
             report,
             "\
 Stats for today:
-  Beers          : 28 reps (28)
+  Beers          : 28 reps
   Burpees        : 33 reps (20 + 13)
-  Pushups        : 15 reps (15)
-  Steps          : 3200 reps (3200)
+  Pushups        : 15 reps
+  Steps          : 3200 reps
   Weighted total : 124"
         );
     }
