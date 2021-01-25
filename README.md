@@ -1,10 +1,10 @@
 # N a Day
 
-THis is a little tool for tracking (physical) excercise of the "N repetitions a day" variant -
+This is a little tool for tracking (physical) excercise of the "N repetitions a day" variant -
 100 pushups per day, 10'000 steps per day etc.
 
-Since I not only needed such a tracker, but also needed some playground project for learning (rust)[https://www.rust-lang.org/),
-this is implemented as CLI tool. Plus, I suck at GUIs. I personally run it in (termux)[https://termux.com/] on my android phone.
+Since I not only needed such a tracker, but also needed some playground project for learning [rust](https://www.rust-lang.org/),
+this is implemented as CLI tool. Plus, I suck at GUIs. I personally run it in [termux](https://termux.com/) on my android phone.
 
 
 ## Installation
