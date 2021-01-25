@@ -58,6 +58,7 @@ impl CategoryLookup {
         }
     }
 
+    #[cfg(test)]
     pub fn len(&self) -> usize {
         self.categories.len()
     }
