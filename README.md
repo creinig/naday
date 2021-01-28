@@ -1,4 +1,5 @@
 # N a Day
+[![Build Status](https://travis-ci.org/creinig/naday.svg?branch=master)](https://travis-ci.org/creinig/naday)
 
 This is a little tool for tracking (physical) excercise of the "N repetitions a day" variant -
 100 pushups per day, 10'000 steps per day etc.
