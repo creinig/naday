@@ -6,7 +6,9 @@ mod storage;
 
 use cli::CliAction;
 use cli::RunContext;
+use itertools::Itertools;
 use model::{Activity, Config};
+use std::cmp::Ord;
 use std::env;
 use std::process;
 
@@ -40,10 +42,15 @@ fn run_system(config: &Config) -> Result<(), String> {
 
     println!("Storage directory: {}", &config.data_dir);
     println!("Known Categories:");
-    for category in categories.iter() {
+    for category in categories
+        .iter()
+        .sorted_by(|a, b| Ord::cmp(&a.name, &b.name))
+    {
         println!(
-            "  {} (weight {}), aliases {:?}",
-            &category.name, &category.weight, &category.aliases
+            "  {:<15} (weight {:<5}), aliases {}",
+            &category.name,
+            &category.weight,
+            category.aliases.iter().join(", ")
         );
     }
 
