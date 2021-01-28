@@ -11,7 +11,13 @@ use std::env;
 use std::process;
 
 pub fn cli_parse(args: env::Args) -> RunContext {
-    RunContext::new(args).unwrap()
+    match RunContext::new(args) {
+        Ok(ctx) => return ctx,
+        Err(msg) => {
+            eprintln!("{}", msg);
+            std::process::exit(1);
+        }
+    }
 }
 
 pub fn run(ctx: RunContext) -> Result<(), String> {
