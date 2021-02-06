@@ -1,4 +1,4 @@
-use crate::model::{Activity, Category, CategoryLookup, Config};
+use crate::model::{Activity, CategoryLookup, Config};
 use crate::report::common::DayStats;
 use crate::storage;
 use chrono::{Date, Datelike, Duration, Local};
@@ -8,6 +8,7 @@ use std::vec::Vec;
 pub fn sliding_days(
     end_date: Date<Local>,
     number_of_days: u32,
+    category: Option<String>,
     config: &Config,
 ) -> Result<(), String> {
     let start_date = end_date - Duration::days((number_of_days - 1).into());
@@ -15,7 +16,8 @@ pub fn sliding_days(
     let categories = storage::read_categories(config)?;
     let activities = storage::read_days(&start_date, &end_date, config)?;
     let stats = build_stats(&activities, &start_date, &end_date);
-    print_stats(&stats, None, &categories);
+
+    print_stats(&stats, category, &categories);
 
     Ok(())
 }
@@ -59,21 +61,38 @@ fn build_stats(
     results
 }
 
-fn print_stats(stats: &Vec<DayStats>, category: Option<&Category>, categories: &CategoryLookup) {
-    for day in stats {
-        match category {
-            Some(cat) => println!(
-                "{:3}: {:>5} reps ({:>5} total)",
-                day.day.weekday(),
-                day.reps_by_category.get(&cat.name).unwrap_or(&0),
-                day.reps_total(categories)
-            ),
+fn print_stats(stats: &Vec<DayStats>, category: Option<String>, categories: &CategoryLookup) {
+    match category {
+        Some(ref cat) => {
+            println!(
+                "Report on {} for the past {} days\n",
+                &categories.find(cat).unwrap().name,
+                stats.len()
+            );
 
-            None => println!(
-                "{:3}: {:>5} total",
-                day.day.weekday(),
-                day.reps_total(categories)
-            ),
+            for day in stats {
+                println!(
+                    "{:3}: {:>5} reps ({:>5} total)",
+                    day.day.weekday(),
+                    day.reps_by_category.get(cat).unwrap_or(&0),
+                    day.reps_total(categories)
+                );
+            }
+        }
+
+        None => {
+            println!(
+                "Report on the weighted total for the past {} days\n",
+                stats.len()
+            );
+
+            for day in stats {
+                println!(
+                    "{:3}: {:>5} total",
+                    day.day.weekday(),
+                    day.reps_total(categories)
+                );
+            }
         }
     }
 }

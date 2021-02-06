@@ -71,42 +71,47 @@ Stats for today:
   Weighted total : 75
 ```
 
-`naday report --month` will print an overview for the past month. For now this only lists the weighted
-total per day for the past 31 days, but additional options are being worked on:
+`naday report --month --category=pu` will print an overview of pushups for the past month. If you
+omit the `--category` option, only the weighted totals will be printed. For now this only lists the total value
+per day for the past 31 days, but additional options are being worked on:
 
 ```
-Wed:     0 total
-Thu:     0 total
-Fri:     0 total
-Sat:     0 total
-Sun:     0 total
-Mon:     0 total
-Tue:     0 total
-Wed:    36 total
-Thu:    16 total
-Fri:     0 total
-Sat:    92 total
-Sun:     0 total
-Mon:    87 total
-Tue:     0 total
-Wed:     0 total
-Thu:     0 total
-Fri:     0 total
-Sat:     0 total
-Sun:     0 total
-Mon:     0 total
-Tue:     0 total
-Wed:     0 total
-Thu:     0 total
-Fri:     0 total
-Sat:     0 total
-Sun:     0 total
-Mon:     0 total
-Tue:     0 total
-Wed:     0 total
-Thu:     0 total
-Fri:     0 total
+Report on Pushups for the past 31 days
+
+Wed:     0 reps (    0 total)
+Thu:     0 reps (    0 total)
+Fri:     0 reps (    0 total)
+Sat:     0 reps (    0 total)
+Sun:     0 reps (    0 total)
+Mon:     0 reps (    0 total)
+Tue:     0 reps (    0 total)
+Wed:    23 reps (   36 total)
+Thu:    16 reps (   16 total)
+Fri:     0 reps (    0 total)
+Sat:     0 reps (   92 total)
+Sun:     0 reps (    0 total)
+Mon:     0 reps (   87 total)
+Tue:     0 reps (    0 total)
+Wed:     0 reps (    0 total)
+Thu:     0 reps (    0 total)
+Fri:     0 reps (    0 total)
+Sat:     0 reps (    0 total)
+Sun:     0 reps (    0 total)
+Mon:     0 reps (    0 total)
+Tue:     0 reps (    0 total)
+Wed:     0 reps (    0 total)
+Thu:     0 reps (    0 total)
+Fri:     0 reps (    0 total)
+Sat:     0 reps (    0 total)
+Sun:     0 reps (    0 total)
+Mon:     0 reps (    0 total)
+Tue:     0 reps (    0 total)
+Wed:     0 reps (    0 total)
+Thu:     0 reps (    0 total)
+Fri:     0 reps (    0 total)
 ```
+
+If you're just interested in the past 7 days, use `--week` instead of `--month`.
 
 Additional and better reports are planned. You can also directly load the save files into a 
 spreadsheet (they are basically plain CSV) and generate your own custom reports.

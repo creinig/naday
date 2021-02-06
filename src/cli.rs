@@ -23,8 +23,15 @@ arg_enum! {
 
 #[derive(Debug, PartialEq)]
 pub enum CliAction {
-    AddActivity { repetitions: u32, category: String },
-    Report { kind: ReportKind, sliding: bool },
+    AddActivity {
+        repetitions: u32,
+        category: String,
+    },
+    Report {
+        kind: ReportKind,
+        category: Option<String>,
+        sliding: bool,
+    },
     System,
 }
 
@@ -101,6 +108,7 @@ fn setup_clap_app() -> App<'static, 'static> {
                 .arg(Arg::from_usage("-w, --week 'Print a report of the current week'"))
                 .arg(Arg::from_usage("-m, --month 'Print a report of the current month'"))
                 .group(ArgGroup::with_name("report_kind").args(&["day", "week", "month"]).required(false).multiple(false))
+                .arg(Arg::from_usage("-c, --category=<NAME_OR_ALIAS> 'print stats on that category instead of the total'").required(false))
         )
 }
 
@@ -147,8 +155,14 @@ fn eval_report(report: &ArgMatches) -> CliAction {
         ReportKind::Month
     };
 
+    let category = match report.value_of("category") {
+        Some(name) => Some(name.to_string()),
+        None => None,
+    };
+
     CliAction::Report {
         kind: kind,
+        category: category,
         sliding: true,
     }
 }
@@ -182,6 +196,7 @@ fn parse_report(spec: &str) -> Result<CliAction, Box<dyn Error>> {
 
     Ok(CliAction::Report {
         kind: kind,
+        category: None,
         sliding: true,
     })
 }
@@ -209,15 +224,18 @@ mod tests {
         assert_eq!(
             CliAction::Report {
                 kind: ReportKind::Month,
+                category: None,
                 sliding: true,
             },
             ctx.unwrap().action
         );
 
-        let ctx = RunContext::new(build_args(vec!["report", "--day"]).into_iter());
+        let ctx =
+            RunContext::new(build_args(vec!["report", "--week", "--category=pu"]).into_iter());
         assert_eq!(
             CliAction::Report {
-                kind: ReportKind::Day,
+                kind: ReportKind::Week,
+                category: Some("pu".to_string()),
                 sliding: true,
             },
             ctx.unwrap().action
@@ -239,6 +257,7 @@ mod tests {
         assert_eq!(
             CliAction::Report {
                 kind: ReportKind::Day,
+                category: None,
                 sliding: true,
             },
             ctx.unwrap().action
@@ -248,6 +267,7 @@ mod tests {
         assert_eq!(
             CliAction::Report {
                 kind: ReportKind::Month,
+                category: None,
                 sliding: true,
             },
             ctx.unwrap().action
