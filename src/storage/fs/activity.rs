@@ -2,13 +2,15 @@ use crate::model::{Activity, Config};
 
 use crate::error::ParseError;
 use chrono::prelude::*;
-use chrono::Duration;
 use itertools::Itertools;
+use log::debug;
 use std::error::Error;
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
+
+type ActivitiesOrError = Result<Vec<Activity>, Box<dyn Error>>;
 
 /// Store the given activity on the filesystem
 pub fn store(activity: &Activity, config: &Config) -> Result<(), Box<dyn Error>> {
@@ -31,16 +33,12 @@ pub fn store(activity: &Activity, config: &Config) -> Result<(), Box<dyn Error>>
 }
 
 /// Read all activities for a given day
-pub fn read_day(date: &Date<Local>, config: &Config) -> Result<Vec<Activity>, Box<dyn Error>> {
+pub fn read_day(date: &Date<Local>, config: &Config) -> ActivitiesOrError {
     read_days(date, date, config)
 }
 
 /// Read all activities for the days from "start" up to "end" (inclusive)
-pub fn read_days(
-    start: &Date<Local>,
-    end: &Date<Local>,
-    config: &Config,
-) -> Result<Vec<Activity>, Box<dyn Error>> {
+pub fn read_days(start: &Date<Local>, end: &Date<Local>, config: &Config) -> ActivitiesOrError {
     if end < start {
         panic!("end is before start");
     }
@@ -48,33 +46,28 @@ pub fn read_days(
     let mut paths = Vec::new();
     let mut day = *start;
     while day <= *end {
-        println!("Adding day {}", &day);
+        debug!("Adding day {}", &day);
         paths.push(path_for_date(&day, config));
-        day = day + Duration::days(1);
+        day = day.succ();
     }
 
     let paths = paths.into_iter().unique();
     let mut activities = Vec::new();
 
     for path in paths {
-        println!("Reading path {:?}", &path);
+        debug!("Reading path {:?}", &path);
         let mut for_path = read_activities(&path)?;
         activities.append(&mut for_path);
     }
 
-    let activities = activities
+    debug!("Found {} activities in input files", activities.len());
+    let activities: Vec<Activity> = activities
         .into_iter()
         .filter(|a| &a.timestamp.date() >= start && &a.timestamp.date() <= end)
         .collect();
 
+    debug!("Found {} activities in time range", activities.len());
     Ok(activities)
-}
-
-/// Read all activities for the past 'ndays' days (including today)
-pub fn read_past_days(ndays: u32, config: &Config) -> Result<Vec<Activity>, Box<dyn Error>> {
-    let today = Local::now().date();
-    let start = today - Duration::days(ndays.into());
-    read_days(&start, &today, config)
 }
 
 //
@@ -118,9 +111,16 @@ fn init_activity_file(path: &Path) -> Result<File, Box<dyn Error>> {
     Ok(file)
 }
 
-/// Read all activities in the given file
-fn read_activities(file_path: &Path) -> Result<Vec<Activity>, Box<dyn Error>> {
-    let contents = fs::read_to_string(file_path)?;
+/// Read all activities in the given file. If the file does not exist an empty list is returned.
+fn read_activities(file_path: &Path) -> ActivitiesOrError {
+    let contents = match fs::read_to_string(file_path) {
+        Ok(raw) => raw,
+        Err(error) => match error.kind() {
+            std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+            _ => return Err(Box::new(error)),
+        },
+    };
+
     let mut activities = Vec::new();
 
     let mut lines = contents.lines();

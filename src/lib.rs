@@ -24,7 +24,7 @@ pub fn cli_parse(args: env::Args) -> RunContext {
 
 pub fn run(ctx: RunContext) -> Result<(), String> {
     match ctx.action {
-        CliAction::Report => report::today(&ctx.config),
+        CliAction::Report => report::sliding_month(&ctx.config),
         CliAction::System => run_system(&ctx.config),
         CliAction::AddActivity {
             repetitions,

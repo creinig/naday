@@ -22,6 +22,15 @@ pub fn read_today(config: &Config) -> Result<Vec<Activity>, Box<dyn Error>> {
     read_day(&now, config)
 }
 
+/// Read all activities for the given range of days (both ends inclusive)
+pub fn read_days(
+    start: &Date<Local>,
+    end: &Date<Local>,
+    config: &Config,
+) -> Result<Vec<Activity>, Box<dyn Error>> {
+    activity::read_days(start, end, config)
+}
+
 /// Read all categories and return a populated lookup structure
 pub fn read_categories(cfg: &Config) -> Result<CategoryLookup, Box<dyn Error>> {
     let categories = category::read_categories(cfg)?;
