@@ -2,6 +2,8 @@ use crate::model::{Activity, Config};
 
 use crate::error::ParseError;
 use chrono::prelude::*;
+use chrono::Duration;
+use itertools::Itertools;
 use std::error::Error;
 use std::fs;
 use std::fs::{File, OpenOptions};
@@ -30,11 +32,49 @@ pub fn store(activity: &Activity, config: &Config) -> Result<(), Box<dyn Error>>
 
 /// Read all activities for a given day
 pub fn read_day(date: &Date<Local>, config: &Config) -> Result<Vec<Activity>, Box<dyn Error>> {
-    let activities = read_activities(&path_for_date(date, config))?;
-    Ok(activities
+    read_days(date, date, config)
+}
+
+/// Read all activities for the days from "start" up to "end" (inclusive)
+pub fn read_days(
+    start: &Date<Local>,
+    end: &Date<Local>,
+    config: &Config,
+) -> Result<Vec<Activity>, Box<dyn Error>> {
+    if end < start {
+        panic!("end is before start");
+    }
+
+    let mut paths = Vec::new();
+    let mut day = *start;
+    while day <= *end {
+        println!("Adding day {}", &day);
+        paths.push(path_for_date(&day, config));
+        day = day + Duration::days(1);
+    }
+
+    let paths = paths.into_iter().unique();
+    let mut activities = Vec::new();
+
+    for path in paths {
+        println!("Reading path {:?}", &path);
+        let mut for_path = read_activities(&path)?;
+        activities.append(&mut for_path);
+    }
+
+    let activities = activities
         .into_iter()
-        .filter(|a| a.timestamp.date() == *date)
-        .collect())
+        .filter(|a| &a.timestamp.date() >= start && &a.timestamp.date() <= end)
+        .collect();
+
+    Ok(activities)
+}
+
+/// Read all activities for the past 'ndays' days (including today)
+pub fn read_past_days(ndays: u32, config: &Config) -> Result<Vec<Activity>, Box<dyn Error>> {
+    let today = Local::now().date();
+    let start = today - Duration::days(ndays.into());
+    read_days(&start, &today, config)
 }
 
 //
@@ -71,8 +111,9 @@ fn init_activity_file(path: &Path) -> Result<File, Box<dyn Error>> {
 # Lines beginning with '#' are comments and are ignored by the tool
 # The remaining lines are plain CSV, with one recorded activity per line.
 # Separator character is ';', encoding is UTF-8.
-# Columns: timestamp (local time zone) ; number of repetitions ; category (excercise)"
-    , PREAMBLE_ACTIVITIES_V1)?;
+# Columns: timestamp (local time zone) ; number of repetitions ; category (excercise)",
+        PREAMBLE_ACTIVITIES_V1
+    )?;
 
     Ok(file)
 }
@@ -267,6 +308,49 @@ mod tests {
         assert_eq!(activity, activities[1]);
 
         Ok(())
+    }
+
+    #[test]
+    fn multiple_months() {
+        let tmp_dir = TempDir::new().unwrap();
+        let cfg = cfg(&tmp_dir);
+        let start_date = str2ts("2020-12-13 14:34:53").unwrap();
+        let ndays = 200;
+
+        for dayidx in 0..200 {
+            let day = start_date + Duration::days(dayidx);
+            let activity = Activity {
+                timestamp: day,
+                reps: dayidx as u32,
+                category: "Pushups".to_string(),
+            };
+            store(&activity, &cfg).unwrap();
+        }
+
+        let windowsize = 10;
+        for dayidx in 0..200 {
+            let start = (start_date + Duration::days(dayidx)).date();
+            let days_in_window = std::cmp::min(windowsize, ndays - dayidx);
+            let end = start + Duration::days(days_in_window - 1);
+            println!(
+                "Test run with {} .. {}  ({} days)",
+                &start, &end, days_in_window
+            );
+
+            let activities = read_days(&start, &end, &cfg).unwrap();
+            assert_eq!(
+                days_in_window as usize,
+                activities.len(),
+                "activities should contain exactly  one entry per day"
+            );
+
+            for idx in 0..days_in_window {
+                assert_eq!(
+                    (idx + dayidx) as u32,
+                    activities.get(idx as usize).unwrap().reps
+                );
+            }
+        }
     }
 
     fn cfg(tmp: &TempDir) -> Config {
