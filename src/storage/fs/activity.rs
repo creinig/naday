@@ -213,6 +213,7 @@ mod tests {
     use super::*;
     use crate::model::{Activity, Config};
     use chrono::prelude::{DateTime, Local};
+    use chrono::Duration;
     use std::error::Error;
     use std::path::Path;
     use tempfile::TempDir;
@@ -279,7 +280,8 @@ mod tests {
         println!("Target path = <{:?}>", &path);
 
         // initial state: nothing in the file
-        read_activities(&path).expect_err("File should not exist yet");
+        let activities = read_activities(&path).unwrap();
+        assert!(activities.is_empty());
 
         // store 1 activity and read it again
         let activity = Activity {
