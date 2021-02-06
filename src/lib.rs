@@ -24,7 +24,11 @@ pub fn cli_parse(args: env::Args) -> RunContext {
 
 pub fn run(ctx: RunContext) -> Result<(), String> {
     match ctx.action {
-        CliAction::Report => report::sliding_month(&ctx.config),
+        CliAction::Report { kind, sliding: _ } => match kind {
+            cli::ReportKind::Day => report::today(&ctx.config),
+            cli::ReportKind::Week => Err("Week reports not supported yet".to_string()),
+            cli::ReportKind::Month => report::sliding_month(&ctx.config),
+        },
         CliAction::System => run_system(&ctx.config),
         CliAction::AddActivity {
             repetitions,

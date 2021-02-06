@@ -10,7 +10,7 @@ this is implemented as CLI tool. Plus, I suck at GUIs. I personally run it in [t
 
 ## Installation
 
-For now you have to compile & install it yourself, but proper release builds are planned.
+For now you have to compile & install it yourself, but proper release builds are planned, starting with milestone 0.1.0.
 
 Manual builds:
 
@@ -28,10 +28,10 @@ cp target/release/naday ~/.local/bin/
 ```
 Storage directory: /home/creinig/.naday
 Known Categories:
-  PlankSeconds (weight 0.33), aliases ["pl"]
-  Pushups (weight 1), aliases ["pu", "push"]
-  Burpees (weight 1.5), aliases ["bu"]
-  Situps (weight 1), aliases ["si"]
+  Burpees         (weight 1.5  ), aliases bu
+  PlankSeconds    (weight 0.33 ), aliases pl
+  Pushups         (weight 1    ), aliases pu, push
+  Situps          (weight 1    ), aliases si
 ```
 
 This shows some key points that are central to the tool's usage:
@@ -60,7 +60,7 @@ The general pattern for this argument is `<repetitions><name_or_alias>`, with ca
 written as "18Pushups", "18pushups", "18Push" etc.
 
 
-`naday report` will print a little report of today's activities (the same as the info printed
+`naday report --day` will print a little report of today's activities (the same as the info printed
 when logging an activity):
 
 ```
@@ -69,6 +69,43 @@ Stats for today:
   Pushups        : 33 reps (16 + 17)
   PlankSeconds   : 60 reps
   Weighted total : 75
+```
+
+`naday report --month` will print an overview for the past month. For now this only lists the weighted
+total per day for the past 31 days, but additional options are being worked on:
+
+```
+Wed:     0 total
+Thu:     0 total
+Fri:     0 total
+Sat:     0 total
+Sun:     0 total
+Mon:     0 total
+Tue:     0 total
+Wed:    36 total
+Thu:    16 total
+Fri:     0 total
+Sat:    92 total
+Sun:     0 total
+Mon:    87 total
+Tue:     0 total
+Wed:     0 total
+Thu:     0 total
+Fri:     0 total
+Sat:     0 total
+Sun:     0 total
+Mon:     0 total
+Tue:     0 total
+Wed:     0 total
+Thu:     0 total
+Fri:     0 total
+Sat:     0 total
+Sun:     0 total
+Mon:     0 total
+Tue:     0 total
+Wed:     0 total
+Thu:     0 total
+Fri:     0 total
 ```
 
 Additional and better reports are planned. You can also directly load the save files into a 

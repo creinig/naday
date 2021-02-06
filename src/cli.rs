@@ -1,6 +1,6 @@
 use crate::error::ParseError;
 use crate::model::Config;
-use clap::{arg_enum, crate_authors, crate_version, App, Arg};
+use clap::{arg_enum, crate_authors, crate_version, App, Arg, ArgGroup, ArgMatches};
 use directories::BaseDirs;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -9,13 +9,22 @@ use std::ffi::OsString;
 
 lazy_static! {
     static ref ACTIVITY_PATTERN: Regex = Regex::new(r"^(\d+)([a-zA-Z_]\w*)$").unwrap();
-    static ref REPORT_PATTERN: Regex = Regex::new(r"^[rR](-(\d+))?([dmwDMW])$").unwrap();
+    static ref REPORT_PATTERN: Regex = Regex::new(r"^[rR]([dmwDMW])$").unwrap();
+}
+
+arg_enum! {
+    #[derive(PartialEq, Debug)]
+    pub enum ReportKind {
+        Day,
+        Week,
+        Month
+    }
 }
 
 #[derive(Debug, PartialEq)]
 pub enum CliAction {
     AddActivity { repetitions: u32, category: String },
-    Report,
+    Report { kind: ReportKind, sliding: bool },
     System,
 }
 
@@ -47,6 +56,10 @@ impl RunContext {
     }
 }
 
+//
+// functions -------------------------------------
+//
+
 fn parse_activity(spec: &str) -> Result<CliAction, Box<dyn Error>> {
     let groups = match ACTIVITY_PATTERN.captures(spec) {
         Some(groups) => groups,
@@ -64,15 +77,6 @@ fn parse_activity(spec: &str) -> Result<CliAction, Box<dyn Error>> {
     })
 }
 
-arg_enum! {
-    #[derive(PartialEq, Debug)]
-    pub enum ReportType {
-        Day,
-        Week,
-        Month
-    }
-}
-
 fn setup_clap_app() -> App<'static, 'static> {
     App::new("naday")
         .version(crate_version!())
@@ -81,8 +85,8 @@ fn setup_clap_app() -> App<'static, 'static> {
         .arg(Arg::from_usage("[SHORTHAND] 'Shorthand notation for the most common use cases'")
             .long_help(
 "'18pu' is short for 'log 18pu'
-'rd' is short for 'report --type=Day'
-'r-2w' is short for 'report --type=Week --go-back=2")
+'rd' is short for 'report --day'
+'rw' is short for 'report --week")
             .conflicts_with_all(&["log", "system", "report"]))
         .subcommand(
             App::new("log").about("Log an activity")
@@ -93,12 +97,10 @@ fn setup_clap_app() -> App<'static, 'static> {
         )
         .subcommand(
             App::new("report").about("Generate a report on logged activities")
-                .arg(Arg::from_usage("-t, --type=[TYPE] 'The kind of report to generate'")
-                    .possible_values(&ReportType::variants())
-                    .case_insensitive(true)
-                    .default_value("Day"))
-                .arg(Arg::from_usage("-b, --go-back=[UNITS] 'report on the Nth previous day/week/month'"))
-
+                .arg(Arg::from_usage("-d, --day 'Print detailed report for today'"))
+                .arg(Arg::from_usage("-w, --week 'Print a report of the current week'"))
+                .arg(Arg::from_usage("-m, --month 'Print a report of the current month'"))
+                .group(ArgGroup::with_name("report_kind").args(&["day", "week", "month"]).required(false).multiple(false))
         )
 }
 
@@ -117,8 +119,8 @@ where
         }
     };
 
-    if let Some(ref _report) = matches.subcommand_matches("report") {
-        return Ok(CliAction::Report);
+    if let Some(ref report) = matches.subcommand_matches("report") {
+        return Ok(eval_report(report));
     } else if let Some(_system) = matches.subcommand_matches("system") {
         return Ok(CliAction::System);
     } else if let Some(log) = matches.subcommand_matches("log") {
@@ -136,6 +138,21 @@ where
     Ok(CliAction::System)
 }
 
+fn eval_report(report: &ArgMatches) -> CliAction {
+    let kind = if report.is_present("day") {
+        ReportKind::Day
+    } else if report.is_present("week") {
+        ReportKind::Week
+    } else {
+        ReportKind::Month
+    };
+
+    CliAction::Report {
+        kind: kind,
+        sliding: true,
+    }
+}
+
 fn parse_shorthand(spec: &str) -> Result<CliAction, ()> {
     if let Ok(activity) = parse_activity(spec) {
         Ok(activity)
@@ -148,7 +165,7 @@ fn parse_shorthand(spec: &str) -> Result<CliAction, ()> {
 }
 
 fn parse_report(spec: &str) -> Result<CliAction, Box<dyn Error>> {
-    let _groups = match REPORT_PATTERN.captures(spec) {
+    let groups = match REPORT_PATTERN.captures(spec) {
         Some(groups) => groups,
         None => {
             return Err(Box::new(ParseError::new(
@@ -157,9 +174,16 @@ fn parse_report(spec: &str) -> Result<CliAction, Box<dyn Error>> {
         }
     };
 
-    // TODO: support the other parts of the spec
+    let kind = match &groups[1] {
+        "d" | "D" => ReportKind::Day,
+        "w" | "W" => ReportKind::Week,
+        _ => ReportKind::Month,
+    };
 
-    Ok(CliAction::Report)
+    Ok(CliAction::Report {
+        kind: kind,
+        sliding: true,
+    })
 }
 
 fn default_data_dir() -> String {
@@ -182,7 +206,22 @@ mod tests {
         assert_eq!(CliAction::System, ctx.unwrap().action);
 
         let ctx = RunContext::new(build_args(vec!["report"]).into_iter());
-        assert_eq!(CliAction::Report, ctx.unwrap().action);
+        assert_eq!(
+            CliAction::Report {
+                kind: ReportKind::Month,
+                sliding: true,
+            },
+            ctx.unwrap().action
+        );
+
+        let ctx = RunContext::new(build_args(vec!["report", "--day"]).into_iter());
+        assert_eq!(
+            CliAction::Report {
+                kind: ReportKind::Day,
+                sliding: true,
+            },
+            ctx.unwrap().action
+        );
     }
 
     #[test]
@@ -196,11 +235,23 @@ mod tests {
 
     #[test]
     fn shorthand() {
-        let ctx = RunContext::new(build_args(vec!["r-1d"]).into_iter());
-        assert_eq!(CliAction::Report, ctx.unwrap().action);
-
         let ctx = RunContext::new(build_args(vec!["rd"]).into_iter());
-        assert_eq!(CliAction::Report, ctx.unwrap().action);
+        assert_eq!(
+            CliAction::Report {
+                kind: ReportKind::Day,
+                sliding: true,
+            },
+            ctx.unwrap().action
+        );
+
+        let ctx = RunContext::new(build_args(vec!["rm"]).into_iter());
+        assert_eq!(
+            CliAction::Report {
+                kind: ReportKind::Month,
+                sliding: true,
+            },
+            ctx.unwrap().action
+        );
     }
 
     fn build_args(raw: Vec<&str>) -> Vec<String> {
