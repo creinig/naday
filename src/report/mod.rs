@@ -2,6 +2,9 @@ mod common;
 mod sliding;
 mod today;
 
+#[cfg(test)]
+mod test_common;
+
 use crate::model::Config;
 use chrono::Local;
 

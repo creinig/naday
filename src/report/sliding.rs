@@ -96,3 +96,66 @@ fn print_stats(stats: &Vec<DayStats>, category: Option<String>, categories: &Cat
         }
     }
 }
+
+//
+// Tests ---------------------------------------------------
+//
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::Activity;
+    use chrono::{Local, TimeZone};
+
+    #[test]
+    fn build_stats_basic() {
+        let mut activities = Vec::new();
+
+        // - create activities over multiple days (with multiple A per day & category, and multiple
+        // categories per day)
+        activities.push(activity(5, 13, "Pushups"));
+        activities.push(activity(5, 23, "Pushups"));
+        activities.push(activity(5, 23, "Burpees"));
+        activities.push(activity(6, 15, "Burpees"));
+        activities.push(activity(7, 14, "Burpees"));
+        activities.push(activity(7, 23, "Burpees"));
+
+        let start = Local.ymd(2020, 7, 1);
+        let end = Local.ymd(2020, 7, 30);
+        let stats = build_stats(&activities, &start, &end);
+
+        assert_eq!(30, stats.len());
+
+        for daystat in stats {
+            let rbc = &daystat.reps_by_category;
+
+            match daystat.day.day() {
+                5 => {
+                    assert_eq!(2, rbc.len());
+                    assert_eq!(&36, rbc.get("Pushups").unwrap());
+                    assert_eq!(&23, rbc.get("Burpees").unwrap());
+                }
+                6 => {
+                    assert_eq!(1, rbc.len());
+                    assert_eq!(&15, rbc.get("Burpees").unwrap());
+                }
+                7 => {
+                    assert_eq!(1, rbc.len());
+                    assert_eq!(&37, rbc.get("Burpees").unwrap());
+                }
+                _ => {
+                    assert_eq!(0, daystat.reps_by_category.len());
+                }
+            }
+        }
+    }
+
+    fn activity(day_of_month: u32, reps: u32, category: &str) -> Activity {
+        let time = Local.ymd(2020, 7, day_of_month).and_hms(13, 45, 34);
+        Activity {
+            timestamp: time,
+            reps,
+            category: category.to_string(),
+        }
+    }
+}
