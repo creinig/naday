@@ -2,6 +2,11 @@
 name = "naday"
 version = "0.1.0"
 authors = ["Christian Reiniger <creinig@creinig.de>"]
+repository = "https://github.com/creinig/naday.git"
+homepage = "https://github.com/creinig/naday"
+license = "MIR"
+readme = "README-md"
+description = "A little tool for tracking (physical) excercise of the 'N repetitions a day' variant - 100 pushups per day, 10.000 steps per day etc."
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
