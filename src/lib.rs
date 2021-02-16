@@ -14,7 +14,7 @@ use std::process;
 
 pub fn cli_parse(args: env::Args) -> RunContext {
     match RunContext::new(args) {
-        Ok(ctx) => return ctx,
+        Ok(ctx) => ctx,
         Err(msg) => {
             eprintln!("{}", msg);
             std::process::exit(1);

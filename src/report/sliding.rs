@@ -36,11 +36,7 @@ pub fn sliding_days(
 ///  # Returns
 ///  A vector with one entry per day in (start..=end), each holding the total number of reps for
 ///  all categories
-fn build_stats(
-    activities: &Vec<Activity>,
-    start: &Date<Local>,
-    end: &Date<Local>,
-) -> Vec<DayStats> {
+fn build_stats(activities: &[Activity], start: &Date<Local>, end: &Date<Local>) -> Vec<DayStats> {
     let mut by_day: HashMap<Date<Local>, DayStats> = HashMap::new();
 
     for activity in activities {
@@ -61,7 +57,7 @@ fn build_stats(
     results
 }
 
-fn print_stats(stats: &Vec<DayStats>, category: Option<String>, categories: &CategoryLookup) {
+fn print_stats(stats: &[DayStats], category: Option<String>, categories: &CategoryLookup) {
     match category {
         Some(ref cat) => {
             println!(

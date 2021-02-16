@@ -3,7 +3,7 @@ use chrono::{Date, Local};
 use std::collections::HashMap;
 
 /// Calculate the weighted total repetitions over the the given activities
-pub fn weighted_total(activities: &Vec<Activity>, categories: &CategoryLookup) -> u32 {
+pub fn weighted_total(activities: &[Activity], categories: &CategoryLookup) -> u32 {
     let mut total = 0;
 
     for activity in activities {

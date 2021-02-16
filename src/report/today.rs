@@ -18,7 +18,7 @@ pub fn run(config: &Config) -> Result<(), String> {
 //
 
 /// Generate the report for today as string
-fn report(activities: &Vec<Activity>, categories: &CategoryLookup) -> String {
+fn report(activities: &[Activity], categories: &CategoryLookup) -> String {
     let mut by_category = HashMap::new();
     let mut individual: HashMap<String, Vec<u32>> = HashMap::new();
     let total = common::weighted_total(activities, categories);
