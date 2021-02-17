@@ -27,13 +27,13 @@ pub struct Activity {
 }
 
 impl Activity {
-    pub fn new(repetitions: u32, category: &str) -> Activity {
+    pub fn new<S: AsRef<str>>(repetitions: u32, category: S) -> Activity {
         let now = Local::now();
 
         Activity {
             timestamp: now,
             reps: repetitions,
-            category: category.to_string(),
+            category: category.as_ref().to_string(),
         }
     }
 }
@@ -86,4 +86,3 @@ impl Display for Category {
         )
     }
 }
-

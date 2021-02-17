@@ -19,9 +19,9 @@ impl fmt::Display for ParseError {
 impl Error for ParseError {}
 
 impl ParseError {
-    pub fn new(msg: &str) -> ParseError {
+    pub fn new<T: AsRef<str>>(msg: T) -> ParseError {
         ParseError {
-            msg: msg.to_string(),
+            msg: msg.as_ref().to_string(),
         }
     }
 }

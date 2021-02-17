@@ -51,8 +51,8 @@ impl CategoryLookup {
     }
 
     /// Find a category by its name of alias
-    pub fn find(&self, alias_or_name: &str) -> Option<Rc<Category>> {
-        match self.by_name_or_alias.get(alias_or_name) {
+    pub fn find<S: AsRef<str>>(&self, alias_or_name: S) -> Option<Rc<Category>> {
+        match self.by_name_or_alias.get(alias_or_name.as_ref()) {
             Some(cat) => Some(cat.clone()),
             None => None,
         }

@@ -200,8 +200,8 @@ fn ts2str(timestamp: DateTime<Local>) -> String {
 }
 
 /// parse string as activity timestamp
-fn str2ts(raw: &str) -> Result<DateTime<Local>, Box<dyn Error>> {
-    Ok(Local.datetime_from_str(raw.trim(), ACTIVITY_TS_FORMAT)?)
+fn str2ts<S: AsRef<str>>(raw: S) -> Result<DateTime<Local>, Box<dyn Error>> {
+    Ok(Local.datetime_from_str(raw.as_ref().trim(), ACTIVITY_TS_FORMAT)?)
 }
 
 //

@@ -83,7 +83,3 @@ fn run_add_activity(repetitions: u32, category: String, config: &Config) -> Resu
     report::today(config)?;
     Ok(())
 }
-
-//
-// Utility Functions ---------------------------------
-//
