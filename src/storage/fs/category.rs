@@ -1,27 +1,28 @@
 use crate::model::{Category, Config};
 
 use crate::error::ParseError;
-use std::error::Error;
+use anyhow::{bail, Context, Result};
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::path::PathBuf;
 
-pub fn read_categories(cfg: &Config) -> Result<Vec<Category>, Box<dyn Error>> {
+pub fn read_categories(cfg: &Config) -> Result<Vec<Category>> {
     let path = &(init_category_file(cfg)?);
-    let contents = fs::read_to_string(path)?;
+    let contents = fs::read_to_string(path)
+        .with_context(|| format!("Unable to read category file {:?}", path))?;
 
     let mut categories: Vec<Category> = Vec::new();
     let mut lines = contents.lines();
 
     if let Some(preamble) = lines.next() {
         if preamble.trim() != PREAMBLE_CATEGORIES_V1 {
-            return Err(Box::new(ParseError::new(
+            bail!(ParseError::new(
                 "No valid preamble found - unable to determine category file format",
-            )));
+            ));
         }
     } else {
-        return Err(Box::new(ParseError::new("Category file seems to be empty")));
+        bail!(ParseError::new("Category file seems to be empty"));
     }
 
     for line in lines {
@@ -50,14 +51,22 @@ pub fn read_categories(cfg: &Config) -> Result<Vec<Category>, Box<dyn Error>> {
 
 const PREAMBLE_CATEGORIES_V1: &str = "naday categories v1";
 
-fn init_category_file(cfg: &Config) -> Result<PathBuf, Box<dyn Error>> {
-    let mut path = PathBuf::from(&cfg.data_dir);
-    std::fs::create_dir_all(&path)?;
+fn init_category_file(cfg: &Config) -> Result<PathBuf> {
+    let mut path = super::init_data_dir(cfg)?;
 
     path.push("categories.txt");
 
     if !path.exists() {
-        let mut file: File = OpenOptions::new().create(true).write(true).open(&path)?;
+        let mut file: File = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(&path)
+            .with_context(|| {
+                format!(
+                    "Could not open category file <{}> for writing",
+                    path.display()
+                )
+            })?;
 
         writeln!(&mut file, "\
 {}
@@ -80,19 +89,21 @@ Extra;1;x
     Ok(path)
 }
 
-fn parse_category(line: &str) -> Result<Category, String> {
+fn parse_category(line: &str) -> Result<Category> {
     let mut parts = line.split(';');
 
     let name = match parts.next() {
         Some(name) => name.trim(),
-        None => return Err("No category name found".to_string()),
+        None => bail!("No category name found"),
     };
 
     let weight: f64 = match parts.next() {
-        Some(weight) => match weight.parse() {
-            Ok(val) => val,
-            Err(error) => return Err(error.to_string()),
-        },
+        Some(weight) => weight.parse().with_context(|| {
+            format!(
+                "Unable to parse category weight <{}> in line <{}>",
+                weight, line
+            )
+        })?,
         None => 1.0,
     };
 

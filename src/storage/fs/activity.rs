@@ -1,25 +1,25 @@
 use crate::model::{Activity, Config};
 
 use crate::error::ParseError;
+use anyhow::{bail, Context, Result};
 use chrono::prelude::*;
 use itertools::Itertools;
 use log::debug;
-use std::error::Error;
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-type ActivitiesOrError = Result<Vec<Activity>, Box<dyn Error>>;
+type ActivitiesOrError = Result<Vec<Activity>>;
 
 /// Store the given activity on the filesystem
-pub fn store(activity: &Activity, config: &Config) -> Result<(), Box<dyn Error>> {
-    let dir_path = Path::new(&config.data_dir);
-    std::fs::create_dir_all(&dir_path)?;
+pub fn store(activity: &Activity, config: &Config) -> Result<()> {
+    let dir_path = super::init_data_dir(&config);
 
     let file_path = path_for_date(&activity.timestamp.date(), config);
 
-    let mut file: File = init_activity_file(&file_path)?;
+    let mut file: File = init_activity_file(&file_path)
+        .with_context(|| format!("Activity file {:?} could not be initialized", &dir_path))?;
 
     writeln!(
         &mut file,
@@ -27,7 +27,8 @@ pub fn store(activity: &Activity, config: &Config) -> Result<(), Box<dyn Error>>
         ts2str(activity.timestamp),
         activity.reps,
         activity.category
-    )?;
+    )
+    .with_context(|| format!("Could not write activity to file {:?}", &dir_path))?;
 
     Ok(())
 }
@@ -46,7 +47,6 @@ pub fn read_days(start: &Date<Local>, end: &Date<Local>, config: &Config) -> Act
     let mut paths = Vec::new();
     let mut day = *start;
     while day <= *end {
-        debug!("Adding day {}", &day);
         paths.push(path_for_date(&day, config));
         day = day.succ();
     }
@@ -56,7 +56,8 @@ pub fn read_days(start: &Date<Local>, end: &Date<Local>, config: &Config) -> Act
 
     for path in paths {
         debug!("Reading path {:?}", &path);
-        let mut for_path = read_activities(&path)?;
+        let mut for_path = read_activities(&path)
+            .with_context(|| format!("Unable to read activities from file {:?}", &path))?;
         activities.append(&mut for_path);
     }
 
@@ -89,7 +90,7 @@ fn path_for_date(date: &Date<Local>, config: &Config) -> PathBuf {
 
 /// Open the activity file for the given timestamp.
 /// If it doesn't exist, initialize it
-fn init_activity_file(path: &Path) -> Result<File, Box<dyn Error>> {
+fn init_activity_file(path: &Path) -> Result<File> {
     if path.exists() {
         return Ok(OpenOptions::new().append(true).open(path)?);
     }
@@ -117,7 +118,7 @@ fn read_activities(file_path: &Path) -> ActivitiesOrError {
         Ok(raw) => raw,
         Err(error) => match error.kind() {
             std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-            _ => return Err(Box::new(error)),
+            _ => bail!(error),
         },
     };
 
@@ -126,12 +127,12 @@ fn read_activities(file_path: &Path) -> ActivitiesOrError {
     let mut lines = contents.lines();
     if let Some(preamble) = lines.next() {
         if preamble.trim() != PREAMBLE_ACTIVITIES_V1 {
-            return Err(Box::new(ParseError::new(
+            bail!(ParseError::new(
                 "No valid preamble found - unable to determine file format",
-            )));
+            ));
         }
     } else {
-        return Err(Box::new(ParseError::new("File seems to be empty")));
+        bail!(ParseError::new("File seems to be empty"));
     }
 
     for line in lines {
@@ -142,11 +143,11 @@ fn read_activities(file_path: &Path) -> ActivitiesOrError {
 
         match parse_activity(line) {
             Ok(activity) => activities.push(activity),
-            Err(msg) => eprintln!(
-                "Skipping unreadable activity <{}> in {}: {}",
+            Err(error) => eprintln!(
+                "Skipping unreadable activity <{}> in {}: {:?}",
                 line,
                 file_path.to_str().unwrap(),
-                msg
+                error
             ),
         }
     }
@@ -155,32 +156,25 @@ fn read_activities(file_path: &Path) -> ActivitiesOrError {
 }
 
 /// parse a single line from an activity file into an Activity struct
-fn parse_activity(line: &str) -> Result<Activity, String> {
+fn parse_activity(line: &str) -> Result<Activity> {
     let mut parts = line.split(';');
 
     //let mut timestamp: DateTime<Local> = Local::now();
     let mut category: String = String::new();
 
     let timestamp = match parts.next() {
-        Some(ts) => match str2ts(ts) {
-            Ok(parsed) => parsed,
-            Err(msg) => {
-                let message = format!("timestamp <{}> could not be parsed: {}", ts, msg);
-                return Err(message);
-            }
-        },
-        None => return Err("No activity timestamp found".to_string()),
+        Some(ts) => str2ts(ts)?,
+        None => bail!("No activity timestamp found"),
     };
 
     let reps = match parts.next() {
-        Some(rep_str) => {
-            if let Ok(parsed) = rep_str.trim().parse() {
-                parsed
-            } else {
-                return Err("Repetitions can not be parsed as whole number".to_string());
-            }
-        }
-        None => return Err("No repetitions found".to_string()),
+        Some(rep_str) => rep_str.trim().parse().with_context(|| {
+            format!(
+                "Repetitions <{}> can not be parsed as whole number",
+                rep_str
+            )
+        })?,
+        None => bail!("No repetitions found"),
     };
 
     if let Some(cat) = parts.next() {
@@ -200,8 +194,11 @@ fn ts2str(timestamp: DateTime<Local>) -> String {
 }
 
 /// parse string as activity timestamp
-fn str2ts<S: AsRef<str>>(raw: S) -> Result<DateTime<Local>, Box<dyn Error>> {
-    Ok(Local.datetime_from_str(raw.as_ref().trim(), ACTIVITY_TS_FORMAT)?)
+fn str2ts<S: AsRef<str>>(raw: S) -> Result<DateTime<Local>> {
+    let ts = Local
+        .datetime_from_str(raw.as_ref().trim(), ACTIVITY_TS_FORMAT)
+        .with_context(|| format!("Unable to patse activity timestamp <{}>", raw.as_ref()))?;
+    Ok(ts)
 }
 
 //
@@ -214,12 +211,11 @@ mod tests {
     use crate::model::{Activity, Config};
     use chrono::prelude::{DateTime, Local};
     use chrono::Duration;
-    use std::error::Error;
     use std::path::Path;
     use tempfile::TempDir;
 
     #[test]
-    fn store_dirinit() -> Result<(), Box<dyn Error>> {
+    fn store_dirinit() -> Result<()> {
         let tmp_dir = TempDir::new()?;
         let cfg = cfg(&tmp_dir);
         let timestamp: DateTime<Local> = Local::now();
@@ -271,7 +267,7 @@ mod tests {
     }
 
     #[test]
-    fn activity_roundtrip() -> Result<(), Box<dyn Error>> {
+    fn activity_roundtrip() -> Result<()> {
         let tmp_dir = TempDir::new()?;
         let cfg = cfg(&tmp_dir);
         let timestamp1 = str2ts("2020-12-13 14:34:53")?;

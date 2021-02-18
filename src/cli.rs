@@ -1,10 +1,10 @@
 use crate::error::ParseError;
 use crate::model::Config;
+use anyhow::{bail, Result};
 use clap::{arg_enum, crate_authors, crate_version, App, Arg, ArgGroup, ArgMatches};
 use directories::BaseDirs;
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::error::Error;
 use std::ffi::OsString;
 
 lazy_static! {
@@ -58,7 +58,7 @@ impl RunContext {
                 ctx.action = action;
                 Ok(ctx)
             }
-            Err(msg) => Err(format!("{:?}", msg).to_string()),
+            Err(msg) => Err(format!("{:?}", msg)),
         }
     }
 }
@@ -67,11 +67,11 @@ impl RunContext {
 // functions -------------------------------------
 //
 
-fn parse_activity(spec: &str) -> Result<CliAction, Box<dyn Error>> {
+fn parse_activity(spec: &str) -> Result<CliAction> {
     let groups = match ACTIVITY_PATTERN.captures(spec) {
         Some(groups) => groups,
         None => {
-            return Err(Box::new(ParseError::new("Unable to parse activity")));
+            bail!(ParseError::new("Unable to parse activity"));
         }
     };
 
@@ -161,8 +161,8 @@ fn eval_report(report: &ArgMatches) -> CliAction {
     };
 
     CliAction::Report {
-        kind: kind,
-        category: category,
+        kind,
+        category,
         sliding: true,
     }
 }
@@ -178,13 +178,11 @@ fn parse_shorthand(spec: &str) -> Result<CliAction, ()> {
     }
 }
 
-fn parse_report(spec: &str) -> Result<CliAction, Box<dyn Error>> {
+fn parse_report(spec: &str) -> Result<CliAction> {
     let groups = match REPORT_PATTERN.captures(spec) {
         Some(groups) => groups,
         None => {
-            return Err(Box::new(ParseError::new(
-                "Unable to parse report shorthand",
-            )))
+            bail!(ParseError::new("Unable to parse report shorthand",))
         }
     };
 
@@ -195,7 +193,7 @@ fn parse_report(spec: &str) -> Result<CliAction, Box<dyn Error>> {
     };
 
     Ok(CliAction::Report {
-        kind: kind,
+        kind,
         category: None,
         sliding: true,
     })

@@ -29,7 +29,7 @@ pub struct DayStats {
 impl DayStats {
     pub fn new(day: &Date<Local>) -> DayStats {
         DayStats {
-            day: day.clone(),
+            day: *day,
             reps_by_category: HashMap::new(),
         }
     }

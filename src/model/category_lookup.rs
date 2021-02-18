@@ -1,4 +1,5 @@
 use super::Category;
+use anyhow::{bail, Result};
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -20,20 +21,19 @@ impl CategoryLookup {
     /// Add the given category to the lookup.
     /// Re-adding a category will be silently ignored. Adding a category with a name or alias that
     /// is already in use will create an Err
-    pub fn add(&mut self, category: Category) -> Result<(), String> {
+    pub fn add(&mut self, category: Category) -> Result<()> {
         if self.categories.contains_key(&category.name) {
             return Ok(()); // No-op. Maybe emit a warning?
         }
 
         for name in category.all_names() {
             if self.by_name_or_alias.contains_key(name) {
-                let msg = format!(
+                bail!(
                     "Duplicate category key: '{}' is used by '{}' and '{}'",
                     name,
                     category.name,
                     self.find(name).unwrap().name
                 );
-                return Err(msg);
             }
         }
 
