@@ -22,12 +22,12 @@ impl CategoryLookup {
     /// Re-adding a category will be silently ignored. Adding a category with a name or alias that
     /// is already in use will create an Err
     pub fn add(&mut self, category: Category) -> Result<()> {
-        if self.categories.contains_key(&category.name) {
+        if self.categories.contains_key(&category.name.to_lowercase()) {
             return Ok(()); // No-op. Maybe emit a warning?
         }
 
         for name in category.all_names() {
-            if self.by_name_or_alias.contains_key(name) {
+            if self.by_name_or_alias.contains_key(&name.to_lowercase()) {
                 bail!(
                     "Duplicate category key: '{}' is used by '{}' and '{}'",
                     name,
@@ -40,11 +40,11 @@ impl CategoryLookup {
         let cat_rc = Rc::new(category);
 
         self.categories
-            .insert(String::from(&cat_rc.name), cat_rc.clone());
+            .insert(String::from(&cat_rc.name).to_lowercase(), cat_rc.clone());
 
         for name in cat_rc.all_names() {
             self.by_name_or_alias
-                .insert(name.to_string(), cat_rc.clone());
+                .insert(name.to_string().to_lowercase(), cat_rc.clone());
         }
 
         Ok(())
@@ -52,7 +52,8 @@ impl CategoryLookup {
 
     /// Find a category by its name of alias
     pub fn find<S: AsRef<str>>(&self, alias_or_name: S) -> Option<Rc<Category>> {
-        match self.by_name_or_alias.get(alias_or_name.as_ref()) {
+        let lc = alias_or_name.as_ref().to_lowercase();
+        match self.by_name_or_alias.get(&lc) {
             Some(cat) => Some(cat.clone()),
             None => None,
         }
@@ -90,7 +91,9 @@ mod tests {
             .unwrap();
 
         assert_eq!("Burpees", &(lookup.find("Burpees").unwrap().name));
+        assert_eq!("Burpees", &(lookup.find("bUrPeEs").unwrap().name));
         assert_eq!("Burpees", &(lookup.find("oof").unwrap().name));
+        assert_eq!("Burpees", &(lookup.find("OOF").unwrap().name));
         assert_eq!("Situps", &(lookup.find("su").unwrap().name));
         assert_eq!("Pushups", &(lookup.find("push").unwrap().name));
     }
