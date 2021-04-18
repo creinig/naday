@@ -60,17 +60,16 @@ fn build_stats(activities: &[Activity], start: &Date<Local>, end: &Date<Local>) 
 fn print_stats(stats: &[DayStats], category: Option<String>, categories: &CategoryLookup) {
     match category {
         Some(ref cat) => {
+            let cat_name = &categories.find(cat).unwrap().name;
             println!(
-                "Report on {} for the past {} days\n",
-                &categories.find(cat).unwrap().name,
-                stats.len()
+                "Report on {} for the past {} days\n", cat_name, stats.len()
             );
 
             for day in stats {
                 println!(
                     "{:3}: {:>5} reps ({:>5} total)",
                     day.day.weekday(),
-                    day.reps_by_category.get(cat).unwrap_or(&0),
+                    day.reps_by_category.get(cat_name).unwrap_or(&0),
                     day.reps_total(categories)
                 );
             }
