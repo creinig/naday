@@ -2,14 +2,14 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::vec::Vec;
 
-use chrono::{Date, Datelike, Duration, Local};
+use chrono::{NaiveDate, Datelike, Duration};
 
 use crate::model::{Activity, Category, CategoryLookup, Config};
 use crate::report::common::DayStats;
 use crate::storage;
 
 pub fn sliding_days(
-    end_date: Date<Local>,
+    end_date: NaiveDate,
     number_of_days: u32,
     category: Option<String>,
     config: &Config,
@@ -39,8 +39,8 @@ pub fn sliding_days(
 ///  # Returns
 ///  A vector with one entry per day in (start..=end), each holding the total number of reps for
 ///  all categories
-fn build_stats(activities: &[Activity], start: &Date<Local>, end: &Date<Local>) -> Vec<DayStats> {
-    let mut by_day: HashMap<Date<Local>, DayStats> = HashMap::new();
+fn build_stats(activities: &[Activity], start: &NaiveDate, end: &NaiveDate) -> Vec<DayStats> {
+    let mut by_day: HashMap<NaiveDate, DayStats> = HashMap::new();
 
     for activity in activities {
         let today = activity.timestamp.date();
@@ -54,7 +54,7 @@ fn build_stats(activities: &[Activity], start: &Date<Local>, end: &Date<Local>) 
     while day <= *end {
         let stats = by_day.remove(&day).unwrap_or_else(|| DayStats::new(&day));
         results.push(stats);
-        day = day.succ();
+        day = day.succ_opt().unwrap();
     }
 
     results
@@ -123,12 +123,9 @@ fn print_stats(stats: &[DayStats], category: Option<String>, categories: &Catego
 
 #[cfg(test)]
 mod tests {
-    use chrono::{Local, TimeZone};
-
     use crate::model::Activity;
 
     use super::*;
-    use super::super::test_common::*;
 
     #[test]
     fn build_stats_basic() {
@@ -143,8 +140,8 @@ mod tests {
         activities.push(activity(7, 14, "Burpees"));
         activities.push(activity(7, 23, "Burpees"));
 
-        let start = Local.ymd(2020, 7, 1);
-        let end = Local.ymd(2020, 7, 30);
+        let start = NaiveDate::from_ymd_opt(2020, 7, 1).unwrap();
+        let end = NaiveDate::from_ymd_opt(2020, 7, 30).unwrap();
         let stats = build_stats(&activities, &start, &end);
 
         assert_eq!(30, stats.len());
@@ -174,7 +171,7 @@ mod tests {
     }
 
     fn activity(day_of_month: u32, reps: u32, category: &str) -> Activity {
-        let time = Local.ymd(2020, 7, day_of_month).and_hms(13, 45, 34);
+        let time = NaiveDate::from_ymd_opt(2020, 7, day_of_month).unwrap().and_hms_opt(13, 45, 34).unwrap();
         Activity {
             timestamp: time,
             reps,
@@ -184,7 +181,7 @@ mod tests {
 
     #[test]
     fn render_daystat() {
-        let time = Local.ymd(2020, 7, 23);
+        let time = NaiveDate::from_ymd_opt(2020, 7, 23).unwrap();
         let lookup = new_lookup();
         let mut stats = DayStats::new(&time);
         stats.add(&Activity::new(15, "Pushups"));

@@ -1,5 +1,5 @@
 use crate::model::{Activity, CategoryLookup, Config};
-use chrono::{Date, Local};
+use chrono::{NaiveDate};
 
 mod fs;
 
@@ -21,8 +21,8 @@ pub fn read_today(config: &Config) -> Result<Vec<Activity>, String> {
 }
 
 pub fn read_days(
-    start: &Date<Local>,
-    end: &Date<Local>,
+    start: &NaiveDate,
+    end: &NaiveDate,
     config: &Config,
 ) -> Result<Vec<Activity>, String> {
     match fs::read_days(start, end, config) {

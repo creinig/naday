@@ -14,7 +14,7 @@ type ActivitiesOrError = Result<Vec<Activity>>;
 
 /// Store the given activity on the filesystem
 pub fn store(activity: &Activity, config: &Config) -> Result<()> {
-    let dir_path = super::init_data_dir(&config);
+    let dir_path = super::init_data_dir(config);
 
     let file_path = path_for_date(&activity.timestamp.date(), config);
 
@@ -34,12 +34,12 @@ pub fn store(activity: &Activity, config: &Config) -> Result<()> {
 }
 
 /// Read all activities for a given day
-pub fn read_day(date: &Date<Local>, config: &Config) -> ActivitiesOrError {
+pub fn read_day(date: &NaiveDate, config: &Config) -> ActivitiesOrError {
     read_days(date, date, config)
 }
 
 /// Read all activities for the days from "start" up to "end" (inclusive)
-pub fn read_days(start: &Date<Local>, end: &Date<Local>, config: &Config) -> ActivitiesOrError {
+pub fn read_days(start: &NaiveDate, end: &NaiveDate, config: &Config) -> ActivitiesOrError {
     if end < start {
         panic!("end is before start");
     }
@@ -48,7 +48,7 @@ pub fn read_days(start: &Date<Local>, end: &Date<Local>, config: &Config) -> Act
     let mut day = *start;
     while day <= *end {
         paths.push(path_for_date(&day, config));
-        day = day.succ();
+        day = day.succ_opt().unwrap();
     }
 
     let paths = paths.into_iter().unique();
@@ -82,7 +82,7 @@ const PREAMBLE_ACTIVITIES_V1: &str = "naday activities v1";
 /// Get the path (fully qualified filename) of the file containing the activities of the given
 /// date.
 /// This does not check whether the file or its parent directories exist.
-fn path_for_date(date: &Date<Local>, config: &Config) -> PathBuf {
+fn path_for_date(date: &NaiveDate, config: &Config) -> PathBuf {
     let filename = date.format(ACTIVITY_FILE_FORMAT).to_string();
     let file_path: PathBuf = [&config.data_dir, &filename].iter().collect();
     file_path
@@ -189,14 +189,13 @@ fn parse_activity(line: &str) -> Result<Activity> {
 }
 
 /// convert activity timestamp to string
-fn ts2str(timestamp: DateTime<Local>) -> String {
+fn ts2str(timestamp: NaiveDateTime) -> String {
     timestamp.format(ACTIVITY_TS_FORMAT).to_string()
 }
 
 /// parse string as activity timestamp
-fn str2ts<S: AsRef<str>>(raw: S) -> Result<DateTime<Local>> {
-    let ts = Local
-        .datetime_from_str(raw.as_ref().trim(), ACTIVITY_TS_FORMAT)
+fn str2ts<S: AsRef<str>>(raw: S) -> Result<NaiveDateTime> {
+    let ts = NaiveDateTime::parse_from_str(raw.as_ref().trim(), ACTIVITY_TS_FORMAT)
         .with_context(|| format!("Unable to patse activity timestamp <{}>", raw.as_ref()))?;
     Ok(ts)
 }
@@ -209,7 +208,7 @@ fn str2ts<S: AsRef<str>>(raw: S) -> Result<DateTime<Local>> {
 mod tests {
     use super::*;
     use crate::model::{Activity, Config};
-    use chrono::prelude::{DateTime, Local};
+    use chrono::prelude::{NaiveDateTime, Local};
     use chrono::Duration;
     use std::path::Path;
     use tempfile::TempDir;
@@ -218,7 +217,7 @@ mod tests {
     fn store_dirinit() -> Result<()> {
         let tmp_dir = TempDir::new()?;
         let cfg = cfg(&tmp_dir);
-        let timestamp: DateTime<Local> = Local::now();
+        let timestamp: NaiveDateTime = Local::now().naive_local();
 
         let activity = Activity::new(34, "Pushups");
 
@@ -256,7 +255,7 @@ mod tests {
         let timestamp: DateTime<Local> = Local::now();
         let activity = Activity::new(13, "Burpees");
 
-        let path = path_for_date(&timestamp.date(), &cfg);
+        let path = path_for_date(&timestamp.date_naive(), &cfg);
         assert!(path.exists() == false);
 
         store(&activity, &cfg).unwrap();

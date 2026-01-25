@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local};
+use chrono::{NaiveDateTime, Local};
 use std::fmt;
 use std::fmt::Display;
 
@@ -21,14 +21,14 @@ pub struct Config {
 
 #[derive(Debug)]
 pub struct Activity {
-    pub timestamp: DateTime<Local>,
+    pub timestamp: NaiveDateTime,
     pub category: String,
     pub reps: u32,
 }
 
 impl Activity {
     pub fn new<S: AsRef<str>>(repetitions: u32, category: S) -> Activity {
-        let now = Local::now();
+        let now = Local::now().naive_local();
 
         Activity {
             timestamp: now,

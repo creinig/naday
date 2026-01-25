@@ -1,5 +1,5 @@
 use crate::model::{Activity, CategoryLookup};
-use chrono::{Date, Local};
+use chrono::{NaiveDate};
 use std::collections::HashMap;
 
 /// Calculate the weighted total repetitions over the the given activities
@@ -22,12 +22,12 @@ pub fn weighted_total(activities: &[Activity], categories: &CategoryLookup) -> u
 /// Struct representing the aggregated stats for one day
 #[derive(Debug)]
 pub struct DayStats {
-    pub day: Date<Local>,
+    pub day: NaiveDate,
     pub reps_by_category: HashMap<String, u32>,
 }
 
 impl DayStats {
-    pub fn new(day: &Date<Local>) -> DayStats {
+    pub fn new(day: &NaiveDate) -> DayStats {
         DayStats {
             day: *day,
             reps_by_category: HashMap::new(),

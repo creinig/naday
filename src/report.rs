@@ -13,9 +13,9 @@ pub fn today(config: &Config) -> Result<(), String> {
 }
 
 pub fn sliding_month(category: Option<String>, config: &Config) -> Result<(), String> {
-    sliding::sliding_days(Local::now().date(), 31, category, config)
+    sliding::sliding_days(Local::now().date_naive(), 31, category, config)
 }
 
 pub fn sliding_week(category: Option<String>, config: &Config) -> Result<(), String> {
-    sliding::sliding_days(Local::now().date(), 7, category, config)
+    sliding::sliding_days(Local::now().date_naive(), 7, category, config)
 }

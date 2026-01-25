@@ -13,18 +13,18 @@ pub fn store(activity: &Activity, config: &Config) -> Result<()> {
 }
 
 /// Read all activities for a given day
-pub fn read_day(date: &Date<Local>, config: &Config) -> Result<Vec<Activity>> {
+pub fn read_day(date: &NaiveDate, config: &Config) -> Result<Vec<Activity>> {
     activity::read_day(date, config)
 }
 
 /// Read all activities for today
 pub fn read_today(config: &Config) -> Result<Vec<Activity>> {
-    let now = Local::today();
+    let now = Local::now().date_naive();
     read_day(&now, config)
 }
 
 /// Read all activities for the given range of days (both ends inclusive)
-pub fn read_days(start: &Date<Local>, end: &Date<Local>, config: &Config) -> Result<Vec<Activity>> {
+pub fn read_days(start: &NaiveDate, end: &NaiveDate, config: &Config) -> Result<Vec<Activity>> {
     activity::read_days(start, end, config)
 }
 

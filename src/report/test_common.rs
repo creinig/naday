@@ -21,7 +21,7 @@ fn weighted_total_basic() {
 
 #[test]
 fn daystats_basic() {
-    let mut stats = DayStats::new(&Local::now().date());
+    let mut stats = DayStats::new(&Local::now().date_naive());
     let lookup = new_lookup();
 
     assert_eq!(0, stats.reps_total(&lookup));
