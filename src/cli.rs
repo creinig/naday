@@ -42,7 +42,7 @@ pub struct RunContext {
 }
 
 impl RunContext {
-    pub fn new<T>(args: T) -> Result<RunContext, String>
+    pub fn build<T>(args: T) -> Result<RunContext, String>
     where
         T: Iterator<Item = String>,
     {
@@ -215,10 +215,10 @@ mod tests {
 
     #[test]
     fn simple_commands() {
-        let ctx = RunContext::new(build_args(vec!["system"]).into_iter());
+        let ctx = RunContext::build(build_args(vec!["system"]).into_iter());
         assert_eq!(CliAction::System, ctx.unwrap().action);
 
-        let ctx = RunContext::new(build_args(vec!["report"]).into_iter());
+        let ctx = RunContext::build(build_args(vec!["report"]).into_iter());
         assert_eq!(
             CliAction::Report {
                 kind: ReportKind::Month,
@@ -229,7 +229,7 @@ mod tests {
         );
 
         let ctx =
-            RunContext::new(build_args(vec!["report", "--week", "--category=pu"]).into_iter());
+            RunContext::build(build_args(vec!["report", "--week", "--category=pu"]).into_iter());
         assert_eq!(
             CliAction::Report {
                 kind: ReportKind::Week,
@@ -242,16 +242,16 @@ mod tests {
 
     #[test]
     fn activities() {
-        let ctx = RunContext::new(build_args(vec!["16pu"]).into_iter());
+        let ctx = RunContext::build(build_args(vec!["16pu"]).into_iter());
         assert_eq!(build_activity(16, "pu"), ctx.unwrap().action);
 
-        let ctx = RunContext::new(build_args(vec!["23h2"]).into_iter());
+        let ctx = RunContext::build(build_args(vec!["23h2"]).into_iter());
         assert_eq!(build_activity(23, "h2"), ctx.unwrap().action);
     }
 
     #[test]
     fn shorthand() {
-        let ctx = RunContext::new(build_args(vec!["rd"]).into_iter());
+        let ctx = RunContext::build(build_args(vec!["rd"]).into_iter());
         assert_eq!(
             CliAction::Report {
                 kind: ReportKind::Day,
@@ -261,7 +261,7 @@ mod tests {
             ctx.unwrap().action
         );
 
-        let ctx = RunContext::new(build_args(vec!["rm"]).into_iter());
+        let ctx = RunContext::build(build_args(vec!["rm"]).into_iter());
         assert_eq!(
             CliAction::Report {
                 kind: ReportKind::Month,

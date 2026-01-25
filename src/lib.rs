@@ -12,8 +12,9 @@ use std::cmp::Ord;
 use std::env;
 use std::process;
 
+/// Parse the commandline arguments
 pub fn cli_parse(args: env::Args) -> RunContext {
-    match RunContext::new(args) {
+    match RunContext::build(args) {
         Ok(ctx) => ctx,
         Err(msg) => {
             eprintln!("{}", msg);
@@ -22,6 +23,7 @@ pub fn cli_parse(args: env::Args) -> RunContext {
     }
 }
 
+/// Run the program according to the given parsed command line etc
 pub fn run(ctx: RunContext) -> Result<(), String> {
     match ctx.action {
         CliAction::Report {

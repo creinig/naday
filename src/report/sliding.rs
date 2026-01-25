@@ -1,9 +1,12 @@
-use crate::model::{Activity, CategoryLookup, Config};
+use std::collections::HashMap;
+use std::rc::Rc;
+use std::vec::Vec;
+
+use chrono::{Date, Datelike, Duration, Local};
+
+use crate::model::{Activity, Category, CategoryLookup, Config};
 use crate::report::common::DayStats;
 use crate::storage;
-use chrono::{Date, Datelike, Duration, Local};
-use std::collections::HashMap;
-use std::vec::Vec;
 
 pub fn sliding_days(
     end_date: Date<Local>,
@@ -43,7 +46,7 @@ fn build_stats(activities: &[Activity], start: &Date<Local>, end: &Date<Local>) 
         let today = activity.timestamp.date();
 
         let stats = by_day.entry(today).or_insert_with(|| DayStats::new(&today));
-        stats.add(&activity);
+        stats.add(activity);
     }
 
     let mut results = Vec::new();
@@ -57,39 +60,61 @@ fn build_stats(activities: &[Activity], start: &Date<Local>, end: &Date<Local>) 
     results
 }
 
-fn print_stats(stats: &[DayStats], category: Option<String>, categories: &CategoryLookup) {
-    match category {
-        Some(ref cat) => {
-            let cat_name = &categories.find(cat).unwrap().name;
-            println!(
-                "Report on {} for the past {} days\n", cat_name, stats.len()
-            );
+/// Render the given DayStats into a collection of output lines (including header)
+fn render_stats(
+    stats: &[DayStats],
+    category: Option<String>,
+    categories: &CategoryLookup,
+) -> Vec<String> {
+    let cat = category.and_then(|c| categories.find(c));
+    let mut lines = Vec::with_capacity(stats.len() + 1);
 
-            for day in stats {
-                println!(
-                    "{:3}: {:>5} reps ({:>5} total)",
-                    day.day.weekday(),
-                    day.reps_by_category.get(cat_name).unwrap_or(&0),
-                    day.reps_total(categories)
-                );
-            }
+    lines.push(match cat {
+        Some(ref cat) => format!("Report on {} for the past {} days\n", cat.name, stats.len()),
+
+        None => format!(
+            "Report on the weighted total for the past {} days\n",
+            stats.len()
+        ),
+    });
+
+    for day in stats {
+        lines.push(render_daystat(day, &cat, categories));
+    }
+
+    lines
+}
+
+/// Render the given single DayStats object to a line
+fn render_daystat(
+    day: &DayStats,
+    category: &Option<Rc<Category>>,
+    categories: &CategoryLookup,
+) -> String {
+    match category {
+        Some(cat) => {
+            format!(
+                "{:3}: {:>5} reps ({:>5} total)",
+                day.day.weekday(),
+                day.reps_by_category.get(&cat.name).unwrap_or(&0),
+                day.reps_total(categories)
+            )
         }
 
         None => {
-            println!(
-                "Report on the weighted total for the past {} days\n",
-                stats.len()
-            );
-
-            for day in stats {
-                println!(
-                    "{:3}: {:>5} total",
-                    day.day.weekday(),
-                    day.reps_total(categories)
-                );
-            }
+            format!(
+                "{:3}: {:>5} total",
+                day.day.weekday(),
+                day.reps_total(categories)
+            )
         }
     }
+}
+
+fn print_stats(stats: &[DayStats], category: Option<String>, categories: &CategoryLookup) {
+    render_stats(stats, category, categories)
+        .iter()
+        .for_each(|line| println!("{}", line));
 }
 
 //
@@ -98,9 +123,12 @@ fn print_stats(stats: &[DayStats], category: Option<String>, categories: &Catego
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::model::Activity;
     use chrono::{Local, TimeZone};
+
+    use crate::model::Activity;
+
+    use super::*;
+    use super::super::test_common::*;
 
     #[test]
     fn build_stats_basic() {
@@ -152,5 +180,36 @@ mod tests {
             reps,
             category: category.to_string(),
         }
+    }
+
+    #[test]
+    fn render_daystat() {
+        let time = Local.ymd(2020, 7, 23);
+        let lookup = new_lookup();
+        let mut stats = DayStats::new(&time);
+        stats.add(&Activity::new(15, "Pushups"));
+        stats.add(&Activity::new(23, "Burpees"));
+        stats.add(&Activity::new(16, "Burpees"));
+
+        let rendered = super::render_daystat(&stats, &lookup.find("Pushups"), &lookup);
+        assert_eq!(rendered, "Thu:    15 reps (   73 total)");
+
+        let rendered = super::render_daystat(&stats, &lookup.find("Burpees"), &lookup);
+        assert_eq!(rendered, "Thu:    39 reps (   73 total)");
+
+        let rendered = super::render_daystat(&stats, &lookup.find("Steps"), &lookup);
+        assert_eq!(rendered, "Thu:     0 reps (   73 total)");
+
+        let rendered = super::render_daystat(&stats, &None, &lookup);
+        assert_eq!(rendered, "Thu:    73 total");
+    }
+
+    fn new_lookup() -> CategoryLookup {
+        let mut lookup = CategoryLookup::new();
+        lookup.add(Category::new("Pushups", 1.0, vec!["pu"])).unwrap();
+        lookup.add(Category::new("Burpees", 1.5, vec!["bu"])).unwrap();
+        lookup.add(Category::new("Steps", 0.02,  vec!["st"])).unwrap();
+
+        lookup
     }
 }
