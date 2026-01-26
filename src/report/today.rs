@@ -32,8 +32,7 @@ fn report(activities: &[Activity], categories: &CategoryLookup) -> String {
             let sum = by_category.get(cat).unwrap() + activity.reps;
             by_category.insert(cat.to_string(), sum);
         } else {
-            let mut parts = Vec::new();
-            parts.push(activity.reps);
+            let parts = vec![activity.reps];
             individual.insert(cat.to_string(), parts);
 
             by_category.insert(cat.to_string(), activity.reps);
@@ -81,12 +80,12 @@ mod tests {
         lookup.add(newcat("Burpees", 1.5)).unwrap();
         lookup.add(newcat("Steps", 0.01)).unwrap();
 
-        let mut activities = Vec::new();
-        activities.push(Activity::new(15, "Pushups"));
-        activities.push(Activity::new(20, "Burpees"));
-        activities.push(Activity::new(13, "Burpees"));
-        activities.push(Activity::new(3200, "Steps"));
-        activities.push(Activity::new(28, "Beers"));
+        let activities = vec![
+            Activity::new(15, "Pushups"),
+            Activity::new(20, "Burpees"),
+            Activity::new(13, "Burpees"),
+            Activity::new(3200, "Steps"),
+            Activity::new(28, "Beers")];
 
         let report = report(&activities, &lookup);
 

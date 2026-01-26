@@ -6,12 +6,12 @@ use chrono::Local;
 fn weighted_total_basic() {
     let lookup = new_lookup();
 
-    let mut activities = Vec::new();
-    activities.push(Activity::new(15, "Pushups"));
-    activities.push(Activity::new(20, "Burpees"));
-    activities.push(Activity::new(13, "Burpees"));
-    activities.push(Activity::new(3200, "Steps"));
-    activities.push(Activity::new(28, "Beers"));
+    let activities = vec![
+        Activity::new(15, "Pushups"),
+        Activity::new(20, "Burpees"),
+        Activity::new(13, "Burpees"),
+        Activity::new(3200, "Steps"),
+        Activity::new(28, "Beers")];
 
     assert_eq!(
         weighted_total(&activities, &lookup),

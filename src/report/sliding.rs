@@ -129,16 +129,15 @@ mod tests {
 
     #[test]
     fn build_stats_basic() {
-        let mut activities = Vec::new();
-
         // - create activities over multiple days (with multiple A per day & category, and multiple
         // categories per day)
-        activities.push(activity(5, 13, "Pushups"));
-        activities.push(activity(5, 23, "Pushups"));
-        activities.push(activity(5, 23, "Burpees"));
-        activities.push(activity(6, 15, "Burpees"));
-        activities.push(activity(7, 14, "Burpees"));
-        activities.push(activity(7, 23, "Burpees"));
+        let activities = vec![
+            activity(5, 13, "Pushups"),
+            activity(5, 23, "Pushups"),
+            activity(5, 23, "Burpees"),
+            activity(6, 15, "Burpees"),
+            activity(7, 14, "Burpees"),
+            activity(7, 23, "Burpees")];
 
         let start = NaiveDate::from_ymd_opt(2020, 7, 1).unwrap();
         let end = NaiveDate::from_ymd_opt(2020, 7, 30).unwrap();

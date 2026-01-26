@@ -59,6 +59,7 @@ fn init_category_file(cfg: &Config) -> Result<PathBuf> {
     if !path.exists() {
         let mut file: File = OpenOptions::new()
             .create(true)
+            .truncate(true)
             .write(true)
             .open(&path)
             .with_context(|| {
@@ -132,11 +133,11 @@ mod test {
         let categories = read_categories(&cfg).unwrap();
         assert_eq!(6, categories.len());
 
-        assert_eq!("Pushups", &(categories.get(0).unwrap().name));
-        assert_eq!(1.0, categories.get(0).unwrap().weight);
+        assert_eq!("Pushups", &(categories.first().unwrap().name));
+        assert_eq!(1.0, categories.first().unwrap().weight);
         assert_eq!(
             "Category (Pushups, 1, [\"pu\", \"push\"])",
-            categories.get(0).unwrap().to_string()
+            categories.first().unwrap().to_string()
         );
         assert_eq!(
             "Category (Situps, 1, [\"si\"])",
