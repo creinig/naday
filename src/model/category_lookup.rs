@@ -53,10 +53,7 @@ impl CategoryLookup {
     /// Find a category by its name of alias
     pub fn find<S: AsRef<str>>(&self, alias_or_name: S) -> Option<Rc<Category>> {
         let lc = alias_or_name.as_ref().to_lowercase();
-        match self.by_name_or_alias.get(&lc) {
-            Some(cat) => Some(cat.clone()),
-            None => None,
-        }
+        self.by_name_or_alias.get(&lc).cloned()
     }
 
     #[cfg(test)]

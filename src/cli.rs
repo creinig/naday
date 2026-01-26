@@ -127,20 +127,20 @@ where
         }
     };
 
-    if let Some(ref report) = matches.subcommand_matches("report") {
+    if let Some(report) = matches.subcommand_matches("report") {
         return Ok(eval_report(report));
     } else if let Some(_system) = matches.subcommand_matches("system") {
         return Ok(CliAction::System);
     } else if let Some(log) = matches.subcommand_matches("log") {
         let spec = log.value_of("SPEC").unwrap(); // required parameter
-        if let Ok(activity) = parse_activity(&spec) {
+        if let Ok(activity) = parse_activity(spec) {
             return Ok(activity);
         } else {
             eprintln!("{}", log.usage());
             return Err(());
         }
     } else if let Some(shorthand) = matches.value_of("SHORTHAND") {
-        return parse_shorthand(&shorthand);
+        return parse_shorthand(shorthand);
     }
 
     Ok(CliAction::System)
@@ -155,10 +155,7 @@ fn eval_report(report: &ArgMatches) -> CliAction {
         ReportKind::Month
     };
 
-    let category = match report.value_of("category") {
-        Some(name) => Some(name.to_string()),
-        None => None,
-    };
+    let category = report.value_of("category").map(|name| name.to_string());
 
     CliAction::Report {
         kind,
@@ -285,7 +282,7 @@ mod tests {
 
     fn build_activity(repetitions: u32, category: &str) -> CliAction {
         CliAction::AddActivity {
-            repetitions: repetitions,
+            repetitions,
             category: category.to_string(),
         }
     }

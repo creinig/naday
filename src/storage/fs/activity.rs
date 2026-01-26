@@ -95,7 +95,7 @@ fn init_activity_file(path: &Path) -> Result<File> {
         return Ok(OpenOptions::new().append(true).open(path)?);
     }
 
-    let mut file: File = OpenOptions::new().create(true).write(true).open(path)?;
+    let mut file: File = OpenOptions::new().create(true).truncate(false).write(true).open(path)?;
 
     writeln!(
         &mut file,
@@ -224,7 +224,7 @@ mod tests {
         store(&activity, &cfg)?;
 
         let filename = timestamp.format(ACTIVITY_FILE_FORMAT).to_string();
-        let filepath = cfg.data_dir + &(std::path::MAIN_SEPARATOR.to_string()) + &filename;
+        let filepath = cfg.data_dir + std::path::MAIN_SEPARATOR_STR + &filename;
 
         assert!(Path::new(&filepath).exists());
 
@@ -256,7 +256,7 @@ mod tests {
         let activity = Activity::new(13, "Burpees");
 
         let path = path_for_date(&timestamp.date_naive(), &cfg);
-        assert!(path.exists() == false);
+        assert!(!path.exists());
 
         store(&activity, &cfg).unwrap();
         assert!(path.exists());

@@ -70,7 +70,7 @@ impl Category {
         let mut result: Vec<&str> = Vec::new();
         result.push(&self.name);
         for alias in &self.aliases {
-            result.push(&alias);
+            result.push(alias);
         }
 
         result
